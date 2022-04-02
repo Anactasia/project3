@@ -1,3 +1,7 @@
+# чат бот в телеграмме
+# имя: @trtranan_bot
+
+
 import logging
 from telegram.ext import Updater, MessageHandler, Filters
 from telegram import ReplyKeyboardMarkup
@@ -7,7 +11,7 @@ from telegram.ext import CommandHandler
 import requests
 import t
 
-API_KEY = '698b85e113937b14297f5582f941d0a7'
+API_KEY = '698b85e113937b14297f5582f941d0a7'  # ключ для API(выявление погоды)
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG
@@ -15,7 +19,7 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-TOKEN = '5180202177:AAEFDmmGqMctktb_bOhrWNWjqj3ZbvWhnwg'
+TOKEN = '5180202177:AAEFDmmGqMctktb_bOhrWNWjqj3ZbvWhnwg'  # Токен чат-бота
 
 reply_keyboard = [['/weather']]
 markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
@@ -34,11 +38,13 @@ def help(update, context):
         "Я бот")
 
 
+# ПОГОДА
 def weather(update, context):
     update.message.reply_text("Скажи любой город, а я скажу какая там погода.")
     return 3
 
 
+# Выявление погоды указаного города
 def get_weather(update, context):
     query = update.message.text
     print(query)
@@ -64,6 +70,7 @@ def get_weather(update, context):
     return 3
 
 
+# знакомство с пользователям + показ команд чат бота
 def first_response(update, context):
     context.user_data['name_user'] = update.message.text
     update.message.reply_text(
