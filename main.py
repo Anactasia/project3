@@ -52,18 +52,19 @@ def get_weather(update, context):
         query = 'fetch:ip'
     response = requests.get("http://api.openweathermap.org/data/2.5/find",
                             params={'q': query, 'type': 'like', 'units': 'metric', 'APPID': API_KEY})
-    if response.status_code == 200:
+    data = response.json()
+    if data['list'] != []:
         data = response.json()
-
+        print(data, 43)
         conditions = t.translation(data['list'][0]['weather'][0]['description'])
-        print(data['list'][0]['weather'][0]['description'])
+        print(data, 43)
         temp = round(int(data['list'][0]['main']['temp']))
         icon = data['list'][0]['weather'][0]['icon']
         url_photo = f"http://openweathermap.org/img/wn/{icon}@2x.png"
         context.bot.send_photo(chat_id=update.effective_chat.id, photo=url_photo, )
         update.message.reply_text(f"Город: {query.capitalize()}\n"
                                   f"Погодное условие: {conditions}\n"
-                                  f"Температура: {temp}\n")
+                                  f"Температура: {temp} °C\n")
     else:
         update.message.reply_text("Или вы допустили ошибку, или я не знаю такой город.\n"
                                   "Проверте написание или укажите другой город")
