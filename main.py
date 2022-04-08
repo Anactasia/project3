@@ -9,6 +9,7 @@ from telegram.ext import ConversationHandler
 from telegram import ReplyKeyboardRemove
 from telegram.ext import CommandHandler
 import requests
+from gallows_game import get_game1
 import t
 
 API_KEY = '698b85e113937b14297f5582f941d0a7'  # ключ для API(выявление погоды)
@@ -36,6 +37,14 @@ def start(update, context):
 def help(update, context):
     update.message.reply_text(
         "Я бот")
+
+
+def game1(update, context):
+    update.message.reply_text("Игра-виселица.\n"
+                              "Я загадываю слово, а ты угадываешь.\n"
+                              "1 ход = 1 буква. 8 прав на ошибку\n"
+                              "Are you /ready ?"
+                              )
 
 
 # ПОГОДА
@@ -78,8 +87,8 @@ def first_response(update, context):
         f"Очень приятно, {context.user_data['name_user'].capitalize()}.\n"
         "Хочу вам рассказать, что я умею.\n"
         "/weather - Скажу погоду из любого города\n"
-        "Это пока всё(",
-        reply_markup=markup)
+        "game1 - игра-виселица\n"
+        "Это пока всё(")
     # Следующее текстовое сообщение будет обработано
     # обработчиком states[2]
     return 2
@@ -104,14 +113,27 @@ def main():
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
-            1: [MessageHandler(Filters.text & ~Filters.command, first_response)],
-            2: [CommandHandler("weather", weather)],
-            3: [MessageHandler(Filters.text & ~Filters.command, get_weather)]},
+            1: [MessageHandler(Filters.text & ~Filters.command, first_response)]},
         fallbacks=[CommandHandler('stop', stop)]
     )
+    conv_handler1 = ConversationHandler(
+        entry_points=[CommandHandler('weather', weather)],
+        states={
+            3: [MessageHandler(Filters.text & ~Filters.command, get_weather)]},
+        fallbacks=[CommandHandler('stop1', first_response)]
+    )
+    # conv_handler2 = ConversationHandler(
+    #     entry_points=[CommandHandler('game1', game1)],
+    #     states={
+    #         3: [MessageHandler(Filters.text & ~Filters.command, get_game1)]},
+    #     fallbacks=[CommandHandler('stop1', first_response)]
+    # )
+    # dp.add_handler(conv_handler2)
     dp.add_handler(conv_handler)
+    dp.add_handler(conv_handler1)
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("weather", weather))
+    dp.add_handler(CommandHandler("ready", get_game1))
     dp.add_handler(CommandHandler("help", help))
     dp.add_handler(CommandHandler("close", close_keyboard))
 
