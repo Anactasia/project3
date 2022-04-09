@@ -31,8 +31,8 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-TOKEN = '5180202177:AAEFDmmGqMctktb_bOhrWNWjqj3ZbvWhnwg'  # Токен чат-бота
-# TOKEN = '5216550043:AAFqTgbQys_J2zQliL24uqpIqMDN86i8OWY'
+# TOKEN = '5180202177:AAEFDmmGqMctktb_bOhrWNWjqj3ZbvWhnwg'  # Токен чат-бота
+TOKEN = '5216550043:AAFqTgbQys_J2zQliL24uqpIqMDN86i8OWY'
 
 reply_keyboard = [['/weather', '/true_or_false']]
 markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
@@ -47,10 +47,12 @@ def start(update, context):
 
 
 def help(update, context):
-    update.message.reply_text("Вот то, что я умею.\n"
+    update.message.reply_text("Вот то, что я умею: \n"
                               "/weather - Скажу погоду из любого города\n"
-                              "/game1 - игра-виселица\n"
-                              "Это пока всё(")
+                              "game1 - игра-виселица\n"
+                              "/true_or_false - игра 'правда или ложь'\n"
+                              "/market_buy - поищет тебе товар на маркете\n"
+                              "Это пока всё, но я стараюсь развиваться(")
     return ConversationHandler.END
 
 
@@ -144,7 +146,7 @@ def get_weather(update, context):
                                   f"Температура: {temp} °C\n")
     else:
         update.message.reply_text("Или вы допустили ошибку, или я не знаю такой город.\n"
-                                  "Проверте написание или укажите другой город")
+                                  "Проверьте написание или укажите другой город")
     return 3
 
 
@@ -155,6 +157,9 @@ def get_tof(update, context):
     update.message.reply_text(
         f"Рад приветствовать на игре 'Правда или Ложь', {context.user_data['name_user'].capitalize()}.\n"
         "Хочу вам рассказать правила игры: \n"
+        "Я рассказываю вам интересный факт, а вы угадываете: правда это или ложь."
+        " За каждый правильный ответ вам начисляется один балл. "
+        "В конце я подведу итоги и выведу ваше количество правильных ответов. \n"
         "Все довольно просто, начинаем?\n"
         "Выберите, да или нет",
         reply_markup=m)
@@ -221,7 +226,7 @@ def true_or_false(update, context):
         )
     else:
         update.message.reply_text(
-            f"Вы прошли игру и набрали {context.user_data['tof_bal']}!\n"
+            f"Вы прошли игру и набрали балл: {context.user_data['tof_bal']}!\n"
         )
         return ConversationHandler.END
 
@@ -231,7 +236,7 @@ def first_response(update, context):
     context.user_data['name_user'] = update.message.text
     update.message.reply_text(
         f"Очень приятно, {context.user_data['name_user'].capitalize()}.\n"
-        "Хочу вам рассказать, что я умею.\n"
+        "Хочу вам рассказать, что я умею: \n"
         "/weather - Скажу погоду из любого города\n"
         "game1 - игра-виселица\n"
         "/true_or_false - игра 'правда или ложь'\n"
@@ -262,8 +267,15 @@ def market_buy(update, context):
 def market_search(update, context):
     tovar = urllib.parse.quote(update.message.text)
     update.message.reply_text(
+        'Вот ссылки на различные интернет-магазины! \n'
+        '\n'
+        'Яндекс-маркет: \n'
         f'https://market.yandex.ru/search?text={tovar}\n'
+        '\n'
+        'Озон: \n'
         f'https://www.ozon.ru/search?text={tovar}\n'
+        '\n'
+        'Алиэкспресс: \n'
         f'https://aliexpress.ru/wholesale?catId=&SearchText={tovar}\n'
     )
     return ConversationHandler.END
