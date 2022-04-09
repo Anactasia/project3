@@ -9,8 +9,15 @@ from telegram.ext import ConversationHandler
 from telegram import ReplyKeyboardRemove
 from telegram.ext import CommandHandler
 import requests
-from gallows_game import get_game1
+from data import db_session
+from data.world import Worlds
+from data.Themes import Themes
+import random
 import t
+
+rez = []
+world = []
+qw = []
 
 API_KEY = '698b85e113937b14297f5582f941d0a7'  # ключ для API(выявление погоды)
 
@@ -35,16 +42,71 @@ def start(update, context):
 
 
 def help(update, context):
-    update.message.reply_text(
-        "Я бот")
+    update.message.reply_text("Вот то, что я умею.\n"
+                              "/weather - Скажу погоду из любого города\n"
+                              "/game1 - игра-виселица\n"
+                              "Это пока всё(")
+    return ConversationHandler.END
 
 
 def game1(update, context):
     update.message.reply_text("Игра-виселица.\n"
                               "Я загадываю слово, а ты угадываешь.\n"
                               "1 ход = 1 буква. 8 прав на ошибку\n"
-                              "Are you /ready ?"
+                              "Are you ready ? Напиши Да или Нет"
                               )
+    return 1
+
+
+def get_game1(update, context):
+    global rez, world, qw
+    answer = update.message.text.lower().split(' ')
+    print(answer, 34)
+    if 'нет' in answer:
+        return help(update, context)
+    else:
+        db_session.global_init("db/игра.db")
+        db_sess = db_session.create_session()
+        a = [world for world in db_sess.query(Worlds).all()]
+        w = random.choice(a)
+        worl = w.world
+        print(w.id_theme)
+        theme = db_sess.query(Themes).filter(Themes.id == w.id_theme).first().theme
+        level = db_sess.query(Worlds).filter(Worlds.world == worl).first().complexity
+        rez.append(worl)
+        qw = list('_' * len(worl))
+        world = list(worl)
+        update.message.reply_text(f"Сложноть: {level}\n"
+                                  f"Тема: {theme}\n"
+                                  f"Слово: {' '.join(qw)}")
+    return 2
+
+
+def play_game1(update, context):
+    global world, qw
+    letter = update.message.text.lower()
+    print(letter, world, qw)
+    if letter.isalpha() and len(letter) == 1:
+        if letter in world:
+            while world.count(letter) != 0:
+                qw[world.index(letter)] = letter.upper()
+                world[world.index(letter)] = '_'
+            if world.count('_') == len(world):
+                update.message.reply_text("Поздравляю, слово разгадано\n"
+                                          f"Слово: {' '.join(qw)}\n"
+                                          "Хотите еще раз сыграть?\n"
+                                          "Напишите Да или Нет.")
+                return 1
+
+            update.message.reply_text("Молодец, угадал!\n"
+                                      f"Слово: {' '.join(qw)}")
+        else:
+            update.message.reply_text("Такой буквы нет.\n"
+                                      f"Слово: {' '.join(qw)}")
+    else:
+        update.message.reply_text("Это точно не одна буква.\n"
+                                  "Напоминаю, 1 ход = 1 буква.")
+    return 2
 
 
 # ПОГОДА
@@ -87,7 +149,7 @@ def first_response(update, context):
         f"Очень приятно, {context.user_data['name_user'].capitalize()}.\n"
         "Хочу вам рассказать, что я умею.\n"
         "/weather - Скажу погоду из любого города\n"
-        "game1 - игра-виселица\n"
+        "/game1 - игра-виселица\n"
         "Это пока всё(")
     # Следующее текстовое сообщение будет обработано
     # обработчиком states[2]
@@ -114,21 +176,22 @@ def main():
         entry_points=[CommandHandler('start', start)],
         states={
             1: [MessageHandler(Filters.text & ~Filters.command, first_response)]},
-        fallbacks=[CommandHandler('stop', stop)]
+        fallbacks=[CommandHandler('stop', help)]
     )
     conv_handler1 = ConversationHandler(
         entry_points=[CommandHandler('weather', weather)],
         states={
             3: [MessageHandler(Filters.text & ~Filters.command, get_weather)]},
-        fallbacks=[CommandHandler('stop1', first_response)]
+        fallbacks=[CommandHandler('stop', help)]
     )
-    # conv_handler2 = ConversationHandler(
-    #     entry_points=[CommandHandler('game1', game1)],
-    #     states={
-    #         3: [MessageHandler(Filters.text & ~Filters.command, get_game1)]},
-    #     fallbacks=[CommandHandler('stop1', first_response)]
-    # )
-    # dp.add_handler(conv_handler2)
+    conv_handler2 = ConversationHandler(
+        entry_points=[CommandHandler('game1', game1)],
+        states={
+            1: [MessageHandler(Filters.text & ~Filters.command, get_game1)],
+            2: [MessageHandler(Filters.text & ~Filters.command, play_game1)]},
+        fallbacks=[CommandHandler('stop', help)]
+    )
+    dp.add_handler(conv_handler2)
     dp.add_handler(conv_handler)
     dp.add_handler(conv_handler1)
     dp.add_handler(CommandHandler("start", start))
