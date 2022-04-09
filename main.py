@@ -14,7 +14,7 @@ import requests
 from gallows_game import get_game1
 import t
 import json
-
+import urllib.parse
 
 API_KEY = '698b85e113937b14297f5582f941d0a7'  # ключ для API(выявление погоды)
 
@@ -172,6 +172,7 @@ def first_response(update, context):
         "/weather - Скажу погоду из любого города\n"
         "game1 - игра-виселица\n"
         "/true_or_false - игра 'правда или ложь'\n"
+        "/market_buy - поищет тебе товар на маркете\n"
         "Это пока всё, но я стараюсь развиваться(")
     # Следующее текстовое сообщение будет обработано
     # обработчиком states[2]
@@ -188,6 +189,21 @@ def close_keyboard(update, context):
         "Ok",
         reply_markup=ReplyKeyboardRemove()
     )
+
+
+def market_buy(update, context):
+    update.message.reply_text("Введи название товара, который хочешь найти")
+    return 6
+
+
+def market_search(update, context):
+    tovar = urllib.parse.quote(update.message.text)
+    update.message.reply_text(
+        f'https://market.yandex.ru/search?text={tovar}\n'
+        f'https://www.ozon.ru/search?text={tovar}\n'
+        f'https://aliexpress.ru/wholesale?catId=&SearchText={tovar}\n'
+    )
+    return ConversationHandler.END
 
 
 def main():
@@ -216,17 +232,17 @@ def main():
         fallbacks=[CommandHandler('stop1', first_response)],
     )
 
-    # conv_handler2 = ConversationHandler(
-    #     entry_points=[CommandHandler('game1', game1)],
-    #     states={
-    #         3: [MessageHandler(Filters.text & ~Filters.command, get_game1)]},
-    #     fallbacks=[CommandHandler('stop1', first_response)]
-    # )
-    # dp.add_handler(conv_handler2)
-
+    market_handler = ConversationHandler(
+        entry_points=[CommandHandler('market_buy', market_buy)],
+        states={
+            6: [MessageHandler(Filters.text & ~Filters.command, market_search)]
+        },
+        fallbacks=[CommandHandler('stop1', first_response)],
+    )
     dp.add_handler(conv_handler)
     dp.add_handler(conv_handler1)
     dp.add_handler(tof_handler)
+    dp.add_handler(market_handler)
 
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("weather", weather))
@@ -234,6 +250,7 @@ def main():
     dp.add_handler(CommandHandler("help", help))
     dp.add_handler(CommandHandler("close", close_keyboard))
     dp.add_handler(CommandHandler("true_or_false", get_tof))
+    dp.add_handler(CommandHandler("market_buy", market_buy))
 
     updater.start_polling()
     updater.start_polling()
