@@ -3,6 +3,8 @@
 
 
 import logging
+
+from jinja2.nodes import Const
 from telegram.ext import Updater, MessageHandler, Filters
 from telegram import ReplyKeyboardMarkup
 from telegram.ext import ConversationHandler
@@ -11,7 +13,6 @@ from telegram.ext import CommandHandler
 import requests
 from gallows_game import get_game1
 import t
-import os
 import json
 
 
@@ -100,7 +101,7 @@ def get_tof(update, context):
 def tof_check_answer(update, context):
     answer = update.message.text
     if answer == "Да":
-        with open("data/tof.json", encoding='utf-8') as f:
+        with open("data/tof.json", 'r', encoding='utf8') as f:
             context.user_data['tof_data'] = json.load(f)
         print(json.dumps(context.user_data['tof_data'], indent=2))
         q = context.user_data['tof_data']['data'][0]
@@ -120,26 +121,23 @@ def tof_check_answer(update, context):
         update.message.reply_text("Ок, как хочешь")
         return -1
 
+
 def tof_is_right_answer(context, answer):
     a = False
     if answer == 'Правда':
         a = True
-    for q in context.user_data['tof_data']['data']:
-        if q['quest'] == context.user_data['tof_quest']:
-            if q['answer'] == a:
-                return True
-            else:
-                return False
+    if a == context.user_data['tof_answer']:
+        return True
+    else:
+        return False
 
 
 def true_or_false(update, context):
-    print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
     buttons = [['Правда', 'Ложь']]
     m = ReplyKeyboardMarkup(buttons, one_time_keyboard=True)
     answer = update.message.text
     if tof_is_right_answer(context, answer):
-        update.message.reply_text(
-            f"Верно, поздравляю, вам +1 балл! \n")
+        update.message.reply_text(f"Верно, поздравляю, вам +1 балл! \n")
         context.user_data['tof_bal'] += 1
     else:
         update.message.reply_text(f"К сожалению, вы ошиблись.\n")
@@ -147,8 +145,9 @@ def true_or_false(update, context):
     if context.user_data['tof_is_first_answer']:
         del context.user_data['tof_data']['data'][0]
         context.user_data['tof_is_first_answer'] = False
+
     if len(context.user_data['tof_data']['data']) > 0:
-        q = context.user_data['data']['data'].pop()
+        q = context.user_data['tof_data']['data'].pop()
         context.user_data['tof_quest'] = q['quest']
         context.user_data['tof_answer'] = q['answer']
         print(q)
@@ -159,9 +158,9 @@ def true_or_false(update, context):
         )
     else:
         update.message.reply_text(
-            f"Вы прошли игру и набрали {context.user_data['tof_bal']}!\n",
-            reply_markup=m
+            f"Вы прошли игру и набрали {context.user_data['tof_bal']}!\n"
         )
+        return ConversationHandler.END
 
 
 # знакомство с пользователям + показ команд чат бота
