@@ -11,6 +11,8 @@ from telegram.ext import CommandHandler
 import requests
 from gallows_game import get_game1
 import t
+import os
+import random
 
 API_KEY = '698b85e113937b14297f5582f941d0a7'  # ключ для API(выявление погоды)
 
@@ -20,9 +22,10 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-TOKEN = '5180202177:AAEFDmmGqMctktb_bOhrWNWjqj3ZbvWhnwg'  # Токен чат-бота
+# TOKEN = '5180202177:AAEFDmmGqMctktb_bOhrWNWjqj3ZbvWhnwg'  # Токен чат-бота
+TOKEN = '5216550043:AAFqTgbQys_J2zQliL24uqpIqMDN86i8OWY'
 
-reply_keyboard = [['/weather']]
+reply_keyboard = [['/weather', '/true_or_false']]
 markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
 
 
@@ -80,6 +83,49 @@ def get_weather(update, context):
     return 3
 
 
+def get_tof(update, context):
+    button = [["Да", "Нет"]]
+    markups = ReplyKeyboardMarkup(button, one_time_keyboard=True)
+    context.user_data['name_user'] = update.message.text
+    update.message.reply_text(
+        f"Рад приветствовать на игре 'Правда или Ложь', {context.user_data['name_user'].capitalize()}.\n"
+        "Хочу вам рассказать правила игры: \n"
+        "Все довольно просто, начинаем?\n"
+        "Выберите, да или нет",
+    reply_markup=markups)
+    return 4
+
+
+def isTrue0rFalse(update, context):
+    pass
+
+
+def true_or_false(update, context):
+    print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+    buttons = [['Правда', 'Ложь']]
+    markupss = ReplyKeyboardMarkup(buttons, one_time_keyboard=True)
+    count = 0
+    with open("data/tof.json", encoding='utf-8') as f:
+        context.user_data['data'] = f
+    quest = context.user_data['data']['data'].pop()
+    update.message.reply_text(
+        f"Итак, факт!\n"
+        f"{quest}\n",
+        reply_markup=markupss
+    )
+    answer = update.message.text
+
+    if answer == 'Правда':
+        update.message.reply_text(
+            f"Верно, поздравляю, вам +1 балл! \n")
+        count += 1
+    else:
+        update.message.reply_text(
+            f"К сожалению, вы ошиблись.(\n")
+
+    return ConversationHandler.END
+
+
 # знакомство с пользователям + показ команд чат бота
 def first_response(update, context):
     context.user_data['name_user'] = update.message.text
@@ -88,6 +134,7 @@ def first_response(update, context):
         "Хочу вам рассказать, что я умею.\n"
         "/weather - Скажу погоду из любого города\n"
         "game1 - игра-виселица\n"
+        "/true_or_false - игра-виселица\n"
         "Это пока всё(")
     # Следующее текстовое сообщение будет обработано
     # обработчиком states[2]
@@ -122,6 +169,15 @@ def main():
             3: [MessageHandler(Filters.text & ~Filters.command, get_weather)]},
         fallbacks=[CommandHandler('stop1', first_response)]
     )
+
+    conv_handler3 = ConversationHandler(
+        entry_points=[CommandHandler('get_tof', get_tof)],
+        states={
+            4: [MessageHandler(Filters.text & ~Filters.command, true_or_false)]},
+        fallbacks=[CommandHandler('stop1', first_response)],
+    )
+
+
     # conv_handler2 = ConversationHandler(
     #     entry_points=[CommandHandler('game1', game1)],
     #     states={
@@ -129,6 +185,8 @@ def main():
     #     fallbacks=[CommandHandler('stop1', first_response)]
     # )
     # dp.add_handler(conv_handler2)
+
+
     dp.add_handler(conv_handler)
     dp.add_handler(conv_handler1)
     dp.add_handler(CommandHandler("start", start))
@@ -136,6 +194,7 @@ def main():
     dp.add_handler(CommandHandler("ready", get_game1))
     dp.add_handler(CommandHandler("help", help))
     dp.add_handler(CommandHandler("close", close_keyboard))
+    dp.add_handler(CommandHandler("true_or_false", true_or_false))
 
     updater.start_polling()
     updater.start_polling()
