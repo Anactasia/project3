@@ -1,2 +1,2 @@
-from . import world
+from . import word
 from . import Themes

@@ -1,6 +1,6 @@
 from data import db_session
 import random
-from data.world import Worlds
+from data.word import Worlds
 from data.Themes import Themes
 from main import help
 

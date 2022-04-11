@@ -5,12 +5,12 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import orm
 
 
-class Worlds(SqlAlchemyBase):
+class Words(SqlAlchemyBase):
     __tablename__ = 'Words'
 
     id = sqlalchemy.Column(sqlalchemy.Integer,
                            primary_key=True, autoincrement=True)
-    world = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
+    word = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
     complexity = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
     id_theme = sqlalchemy.Column(sqlalchemy.Integer,
                                  sqlalchemy.ForeignKey("Themes.id"))

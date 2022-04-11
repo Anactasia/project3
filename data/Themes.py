@@ -11,4 +11,4 @@ class Themes(SqlAlchemyBase):
                            primary_key=True, autoincrement=True)
     theme = sqlalchemy.Column(sqlalchemy.String, nullable=True)
 
-    themes = orm.relation("Worlds", back_populates='theme')
+    themes = orm.relation("Words", back_populates='theme')
