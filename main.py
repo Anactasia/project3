@@ -12,16 +12,12 @@ from telegram import ReplyKeyboardRemove
 from telegram.ext import CommandHandler
 import requests
 from data import db_session
-from data.world import Worlds
+from data.word import Words
 from data.Themes import Themes
 import random
 import t
 import json
 import urllib.parse
-
-rez = []
-world = []
-qw = []
 
 API_KEY = '698b85e113937b14297f5582f941d0a7'  # ключ для API(выявление погоды)
 
@@ -37,6 +33,11 @@ TOKEN = '5216550043:AAFqTgbQys_J2zQliL24uqpIqMDN86i8OWY'
 reply_keyboard = [['/weather', '/true_or_false']]
 markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
 
+attempts = 0
+words_used = []
+word = []
+spell_word = []
+
 
 def start(update, context):
     print(1212)
@@ -49,15 +50,19 @@ def start(update, context):
 def help(update, context):
     update.message.reply_text("Вот то, что я умею: \n"
                               "/weather - Скажу погоду из любого города\n"
-                              "game1 - игра-виселица\n"
+                              "/gallows - игра-виселица\n"
                               "/true_or_false - игра 'правда или ложь'\n"
                               "/market_buy - поищет тебе товар на маркете\n"
+                              "/main_menu - главное меню\n"
                               "Это пока всё, но я стараюсь развиваться(")
     return ConversationHandler.END
 
 
-
-def game1(update, context):
+def gallows(update, context):
+    global words_used, spell_word, attempts
+    attempts = 0
+    words_used = []
+    spell_word = []
     update.message.reply_text("Игра-виселица.\n"
                               "Я загадываю слово, а ты угадываешь.\n"
                               "1 ход = 1 буква. 8 прав на ошибку\n"
@@ -67,7 +72,9 @@ def game1(update, context):
 
 
 def get_game1(update, context):
-    global rez, world, qw
+    global words_used, word, spell_word, attempts
+    attempts = 0
+    spell_word = []
     answer = update.message.text.lower().split(' ')
     print(answer, 34)
     if 'нет' in answer:
@@ -75,42 +82,69 @@ def get_game1(update, context):
     else:
         db_session.global_init("db/игра.db")
         db_sess = db_session.create_session()
-        a = [world for world in db_sess.query(Worlds).all()]
-        w = random.choice(a)
-        worl = w.world
-        print(w.id_theme)
-        theme = db_sess.query(Themes).filter(Themes.id == w.id_theme).first().theme
-        level = db_sess.query(Worlds).filter(Worlds.world == worl).first().complexity
-        rez.append(worl)
-        qw = list('_' * len(worl))
-        world = list(worl)
-        update.message.reply_text(f"Сложноть: {level}\n"
-                                  f"Тема: {theme}\n"
-                                  f"Слово: {' '.join(qw)}")
-    return 2
+        a = [i for i in db_sess.query(Words).filter(Words.word.notin_(words_used))]
+        print(a)
+        if len(a) == 0:
+            update.message.reply_text("К сожелению, вы разгадали уже все слова(\n"
+                                      "Я постараюсь в следующий раз выучить побольше слов.\n"
+                                      "/main_menu - главное меню")
+        else:
+            w = random.choice(a)
+            wor = w.word
+            print(w.id_theme)
+            theme = db_sess.query(Themes).filter(Themes.id == w.id_theme).first().theme
+            level = db_sess.query(Words).filter(Words.word == wor).first().complexity
+            words_used.append(wor)
+            spell_word = list('_' * len(wor))
+            word = list(wor)
+            update.message.reply_text(f"Сложноть: {level}\n"
+                                      f"Тема: {theme}\n"
+                                      f"Слово: {' '.join(spell_word)}")
+            return 2
 
 
 def play_game1(update, context):
-    global world, qw
+    global word, spell_word, attempts, words_used
     letter = update.message.text.lower()
-    print(letter, world, qw)
     if letter.isalpha() and len(letter) == 1:
-        if letter in world:
-            while world.count(letter) != 0:
-                qw[world.index(letter)] = letter.upper()
-                world[world.index(letter)] = '_'
-            if world.count('_') == len(world):
+        if letter not in word and letter.upper() in spell_word:
+            update.message.reply_text("Да, такая буква есть, но вы её уже угадали.\n"
+                                      f"Слово: {' '.join(spell_word)}")
+        elif letter in word:
+            while word.count(letter) != 0:
+                spell_word[word.index(letter)] = letter.upper()
+                word[word.index(letter)] = '_'
+            if word.count('_') == len(word):
+                context.bot.send_photo(chat_id=update.effective_chat.id, photo=open('img/кот_с_пальцем.jpg', 'rb'))
                 update.message.reply_text("Поздравляю, слово разгадано\n"
-                                          f"Слово: {' '.join(qw)}\n"
+                                          f"Слово: {' '.join(spell_word)}\n"
                                           "Хотите еще раз сыграть?\n"
                                           "Напишите Да или Нет.")
                 return 1
 
             update.message.reply_text("Молодец, угадал!\n"
-                                      f"Слово: {' '.join(qw)}")
+                                      f"Слово: {' '.join(spell_word)}")
         else:
-            update.message.reply_text("Такой буквы нет.\n"
-                                      f"Слово: {' '.join(qw)}")
+            stroc = ''
+            context.bot.send_photo(chat_id=update.effective_chat.id, photo=open(f'img/{attempts + 1}.jpg', 'rb'))
+            attempts += 1
+            q = 7 - attempts
+            if q in [7, 6, 5]:
+                stroc = 'попыток'
+            elif q in [4, 3, 2]:
+                stroc = 'попытки'
+            elif q == 1:
+                stroc = 'попытка'
+            if q != 0:
+                update.message.reply_text("Упс... Такой буквы нет.\n"
+                                          f"Слово: {' '.join(spell_word)}\n"
+                                          f"У тебя осталось {q} {stroc}")
+            else:
+                update.message.reply_text("Попытки кончились.\n"
+                                          f"Это было слово: {words_used[-1].upper()}\n"
+                                          "Хочешь ещё раз попробывать? Напиши Да или Нет.")
+                return 1
+
     else:
         update.message.reply_text("Это точно не одна буква.\n"
                                   "Напоминаю, 1 ход = 1 буква.")
@@ -238,12 +272,10 @@ def first_response(update, context):
         f"Очень приятно, {context.user_data['name_user'].capitalize()}.\n"
         "Хочу вам рассказать, что я умею: \n"
         "/weather - Скажу погоду из любого города\n"
-        "game1 - игра-виселица\n"
+        "/gallows - игра-виселица\n"
         "/true_or_false - игра 'правда или ложь'\n"
         "/market_buy - поищет тебе товар на маркете\n"
         "Это пока всё, но я стараюсь развиваться(")
-    # Следующее текстовое сообщение будет обработано
-    # обработчиком states[2]
     return 2
 
 
@@ -289,22 +321,21 @@ def main():
         entry_points=[CommandHandler('start', start)],
         states={
             1: [MessageHandler(Filters.text & ~Filters.command, first_response)]},
-        fallbacks=[CommandHandler('stop', help)]
+        fallbacks=[CommandHandler('main_menu', help)]
     )
-    conv_handler1 = ConversationHandler(
+    weather_handler = ConversationHandler(
         entry_points=[CommandHandler('weather', weather)],
         states={
             3: [MessageHandler(Filters.text & ~Filters.command, get_weather)]},
-        fallbacks=[CommandHandler('stop', help)]
+        fallbacks=[CommandHandler('main_menu', help)]
     )
-    conv_handler2 = ConversationHandler(
-        entry_points=[CommandHandler('game1', game1)],
+    gallows_handler = ConversationHandler(
+        entry_points=[CommandHandler('gallows', gallows)],
         states={
             1: [MessageHandler(Filters.text & ~Filters.command, get_game1)],
             2: [MessageHandler(Filters.text & ~Filters.command, play_game1)]},
-        fallbacks=[CommandHandler('stop', help)]
+        fallbacks=[CommandHandler('main_menu', help)]
     )
-    dp.add_handler(conv_handler2)
 
     tof_handler = ConversationHandler(
         entry_points=[CommandHandler('true_or_false', get_tof)],
@@ -312,7 +343,7 @@ def main():
             4: [MessageHandler(Filters.regex("^(Да|Нет)$"), tof_check_answer)],
             5: [MessageHandler(Filters.text & ~Filters.command, true_or_false)]
         },
-        fallbacks=[CommandHandler('stop1', first_response)],
+        fallbacks=[CommandHandler('main_menu', help)],
     )
 
     market_handler = ConversationHandler(
@@ -320,17 +351,20 @@ def main():
         states={
             6: [MessageHandler(Filters.text & ~Filters.command, market_search)]
         },
-        fallbacks=[CommandHandler('stop1', first_response)],
+        fallbacks=[CommandHandler('main_menu', help)],
     )
+
     dp.add_handler(conv_handler)
-    dp.add_handler(conv_handler1)
+    dp.add_handler(gallows_handler)
+    dp.add_handler(weather_handler)
     dp.add_handler(tof_handler)
     dp.add_handler(market_handler)
 
     dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(CommandHandler("gallows", gallows))
     dp.add_handler(CommandHandler("weather", weather))
     dp.add_handler(CommandHandler("ready", get_game1))
-    dp.add_handler(CommandHandler("help", help))
+    dp.add_handler(CommandHandler("main_menu", help))
     dp.add_handler(CommandHandler("close", close_keyboard))
     dp.add_handler(CommandHandler("true_or_false", get_tof))
     dp.add_handler(CommandHandler("market_buy", market_buy))
