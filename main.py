@@ -27,8 +27,8 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-# TOKEN = '5180202177:AAEFDmmGqMctktb_bOhrWNWjqj3ZbvWhnwg'  # Токен чат-бота
-TOKEN = '5216550043:AAFqTgbQys_J2zQliL24uqpIqMDN86i8OWY'
+TOKEN = '5180202177:AAEFDmmGqMctktb_bOhrWNWjqj3ZbvWhnwg'  # Токен чат-бота
+# TOKEN = '5216550043:AAFqTgbQys_J2zQliL24uqpIqMDN86i8OWY'
 
 reply_keyboard = [['/weather', '/true_or_false']]
 markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
@@ -313,6 +313,10 @@ def market_search(update, context):
     return ConversationHandler.END
 
 
+def bye(update, context):
+    update.message.reply_text("Ну ладно, пока.")
+
+
 def main():
     updater = Updater(TOKEN)
 
@@ -321,7 +325,7 @@ def main():
         entry_points=[CommandHandler('start', start)],
         states={
             1: [MessageHandler(Filters.text & ~Filters.command, first_response)]},
-        fallbacks=[CommandHandler('main_menu', help)]
+        fallbacks=[CommandHandler('bye', bye)]
     )
     weather_handler = ConversationHandler(
         entry_points=[CommandHandler('weather', weather)],
@@ -361,6 +365,7 @@ def main():
     dp.add_handler(market_handler)
 
     dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(CommandHandler("bye", bye))
     dp.add_handler(CommandHandler("gallows", gallows))
     dp.add_handler(CommandHandler("weather", weather))
     dp.add_handler(CommandHandler("ready", get_game1))
