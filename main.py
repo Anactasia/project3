@@ -1,10 +1,6 @@
 # чат бот в телеграмме
 # имя: @trtranan_bot
-
-
 import logging
-
-from jinja2.nodes import Const
 from telegram.ext import Updater, MessageHandler, Filters
 from telegram import ReplyKeyboardMarkup
 from telegram.ext import ConversationHandler
@@ -30,8 +26,8 @@ logger = logging.getLogger(__name__)
 TOKEN = '5180202177:AAEFDmmGqMctktb_bOhrWNWjqj3ZbvWhnwg'  # Токен чат-бота
 # TOKEN = '5216550043:AAFqTgbQys_J2zQliL24uqpIqMDN86i8OWY'
 
-reply_keyboard = [['/weather', '/true_or_false']]
-markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+# reply_keyboard = [['/weather', '/true_or_false']]
+# markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
 
 attempts = 0
 words_used = []
@@ -49,35 +45,46 @@ def start(update, context):
 
 def help(update, context):
     update.message.reply_text("Вот то, что я умею: \n"
+                              "Помощь\n"
                               "/weather - Скажу погоду из любого города\n"
-                              "/gallows - игра-виселица\n"
-                              "/true_or_false - игра 'правда или ложь'\n"
                               "/market_buy - поищет тебе товар на маркете\n"
                               "/main_menu - главное меню\n"
+                              "\n"
+                              "Развлечения\n"
+                              "/gallows - игра-виселица\n"
+                              "/true_or_false - игра 'правда или ложь'\n"
+                              "\n"
                               "Это пока всё, но я стараюсь развиваться(")
     return ConversationHandler.END
 
 
 def gallows(update, context):
     global words_used, spell_word, attempts
+    exit = [['Выход'], ['Да'], ['Нет']]
+    s = ReplyKeyboardMarkup(exit, one_time_keyboard=True)
     attempts = 0
     words_used = []
     spell_word = []
     update.message.reply_text("Игра-виселица.\n"
                               "Я загадываю слово, а ты угадываешь.\n"
                               "1 ход = 1 буква. 8 прав на ошибку\n"
-                              "Are you ready ? Напиши Да или Нет"
+                              "Are you ready ? Напиши Да или Нет\n"
+                              "Если надоест, можешь в любой момент написать или нажать на кнопку 'Выход'",
+                              reply_markup=s
                               )
     return 1
 
 
 def get_game1(update, context):
     global words_used, word, spell_word, attempts
+    exit = [['Выход']]
+    s = ReplyKeyboardMarkup(exit, one_time_keyboard=True)
     attempts = 0
     spell_word = []
     answer = update.message.text.lower().split(' ')
-    print(answer, 34)
     if 'нет' in answer:
+        return help(update, context)
+    elif 'выход' in answer:
         return help(update, context)
     else:
         db_session.global_init("db/игра.db")
@@ -87,7 +94,9 @@ def get_game1(update, context):
         if len(a) == 0:
             update.message.reply_text("К сожелению, вы разгадали уже все слова(\n"
                                       "Я постараюсь в следующий раз выучить побольше слов.\n"
-                                      "/main_menu - главное меню")
+                                      "/main_menu - главное меню",
+                                      reply_markup=s
+                                      )
         else:
             w = random.choice(a)
             wor = w.word
@@ -99,17 +108,25 @@ def get_game1(update, context):
             word = list(wor)
             update.message.reply_text(f"Сложноть: {level}\n"
                                       f"Тема: {theme}\n"
-                                      f"Слово: {' '.join(spell_word)}")
+                                      f"Слово: {' '.join(spell_word)}",
+                                      reply_markup=s
+                                      )
             return 2
 
 
 def play_game1(update, context):
     global word, spell_word, attempts, words_used
+    exit = [['Выход']]
+    s = ReplyKeyboardMarkup(exit, one_time_keyboard=True)
+    letter = update.message.text.lower()
+    if 'выход' in letter:
+        return help(update, context)
     letter = update.message.text.lower()
     if letter.isalpha() and len(letter) == 1:
         if letter not in word and letter.upper() in spell_word:
             update.message.reply_text("Да, такая буква есть, но вы её уже угадали.\n"
-                                      f"Слово: {' '.join(spell_word)}")
+                                      f"Слово: {' '.join(spell_word)}",
+                                      )
         elif letter in word:
             while word.count(letter) != 0:
                 spell_word[word.index(letter)] = letter.upper()
@@ -119,48 +136,66 @@ def play_game1(update, context):
                 update.message.reply_text("Поздравляю, слово разгадано\n"
                                           f"Слово: {' '.join(spell_word)}\n"
                                           "Хотите еще раз сыграть?\n"
-                                          "Напишите Да или Нет.")
+                                          "Напишите Да или Нет."
+                                          )
                 return 1
 
             update.message.reply_text("Молодец, угадал!\n"
-                                      f"Слово: {' '.join(spell_word)}")
+                                      f"Слово: {' '.join(spell_word)}"
+                                      )
         else:
             stroc = ''
-            context.bot.send_photo(chat_id=update.effective_chat.id, photo=open(f'img/{attempts + 1}.jpg', 'rb'))
-            attempts += 1
             q = 7 - attempts
-            if q in [7, 6, 5]:
-                stroc = 'попыток'
-            elif q in [4, 3, 2]:
-                stroc = 'попытки'
-            elif q == 1:
-                stroc = 'попытка'
             if q != 0:
+                context.bot.send_photo(chat_id=update.effective_chat.id, photo=open(f'img/{attempts + 1}.jpg', 'rb'))
+                attempts += 1
+                if q in [7, 6, 5]:
+                    stroc = 'попыток'
+                elif q in [4, 3, 2]:
+                    stroc = 'попытки'
+                elif q == 1:
+                    stroc = 'попытка'
                 update.message.reply_text("Упс... Такой буквы нет.\n"
                                           f"Слово: {' '.join(spell_word)}\n"
-                                          f"У тебя осталось {q} {stroc}")
+                                          f"У тебя осталось {q} {stroc}"
+                                          )
             else:
+                exit = [['Выход'], ['Да'], ['Нет']]
+                s = ReplyKeyboardMarkup(exit, one_time_keyboard=True)
+                context.bot.send_photo(chat_id=update.effective_chat.id, photo=open('img/кот_немного_плачет.jpg', 'rb'))
                 update.message.reply_text("Попытки кончились.\n"
                                           f"Это было слово: {words_used[-1].upper()}\n"
-                                          "Хочешь ещё раз попробывать? Напиши Да или Нет.")
+                                          "Хочешь ещё раз попробывать? Напиши Да или Нет.",
+                                          reply_markup=s
+                                          )
                 return 1
 
     else:
         update.message.reply_text("Это точно не одна буква.\n"
-                                  "Напоминаю, 1 ход = 1 буква.")
+                                  "Напоминаю, 1 ход = 1 буква."
+                                  )
     return 2
 
 
 # ПОГОДА
 def weather(update, context):
-    update.message.reply_text("Скажи любой город, а я скажу какая там погода.")
+    exit = [['Выход']]
+    s = ReplyKeyboardMarkup(exit, one_time_keyboard=True)
+    context.bot.send_photo(chat_id=update.effective_chat.id, photo=open('img/кот_с_зонтом.jpg', 'rb'))
+    update.message.reply_text("Скажи любой город, а я скажу какая там погода.\n"
+                              "Если надоест, можешь в любой момент написать или нажать на кнопку 'Выход'",
+                              reply_markup=s
+                              )
     return 3
 
 
 # Выявление погоды указаного города
 def get_weather(update, context):
+    exit = [['Выход']]
+    s = ReplyKeyboardMarkup(exit, one_time_keyboard=True)
     query = update.message.text
-    print(query)
+    if 'Выход' == query:
+        return help(update, context)
     if not query:
         query = 'fetch:ip'
     response = requests.get("http://api.openweathermap.org/data/2.5/find",
@@ -271,10 +306,15 @@ def first_response(update, context):
     update.message.reply_text(
         f"Очень приятно, {context.user_data['name_user'].capitalize()}.\n"
         "Хочу вам рассказать, что я умею: \n"
+        "Помощь\n"
         "/weather - Скажу погоду из любого города\n"
+        "/market_buy - поищет тебе товар на маркете\n"
+        "/main_menu - главное меню\n"
+        "\n"
+        "Развлечения\n"
         "/gallows - игра-виселица\n"
         "/true_or_false - игра 'правда или ложь'\n"
-        "/market_buy - поищет тебе товар на маркете\n"
+        "\n"
         "Это пока всё, но я стараюсь развиваться(")
     return 2
 

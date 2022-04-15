@@ -1,6 +1,5 @@
 # Переводчик слов
 # Используется для перевода "условий погоды" в команде /weather
-
 import requests
 
 API_KEY_TRANSL = '33569effd4msh09c2fdf1deea561p1ed1e2jsn3d2fd4806d5e'
