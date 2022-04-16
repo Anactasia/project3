@@ -40,14 +40,14 @@ def start(update, context):
     update.message.reply_text(
         "Привет. Я бот 'Pass the time'. А ты кто?",
     )
-    return 1
+    return 0
 
 
 def help(update, context):
     update.message.reply_text("Вот то, что я умею: \n"
                               "Помощь\n"
-                              "/weather - Скажу погоду из любого города\n"
-                              "/market_buy - поищет тебе товар на маркете\n"
+                              "/weather - скажу погоду из любого города\n"
+                              "/market_buy - найду тебе товар на маркете\n"
                               "/main_menu - главное меню\n"
                               "\n"
                               "Развлечения\n"
@@ -307,8 +307,8 @@ def first_response(update, context):
         f"Очень приятно, {context.user_data['name_user'].capitalize()}.\n"
         "Хочу вам рассказать, что я умею: \n"
         "Помощь\n"
-        "/weather - Скажу погоду из любого города\n"
-        "/market_buy - поищет тебе товар на маркете\n"
+        "/weather - скажу погоду из любого города\n"
+        "/market_buy - найду тебе товар на маркете\n"
         "/main_menu - главное меню\n"
         "\n"
         "Развлечения\n"
@@ -364,7 +364,7 @@ def main():
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
-            1: [MessageHandler(Filters.text & ~Filters.command, first_response)]},
+            0: [MessageHandler(Filters.text & ~Filters.command, first_response, pass_user_data=True)]},
         fallbacks=[CommandHandler('bye', bye)]
     )
     weather_handler = ConversationHandler(
@@ -384,8 +384,8 @@ def main():
     tof_handler = ConversationHandler(
         entry_points=[CommandHandler('true_or_false', get_tof)],
         states={
-            4: [MessageHandler(Filters.regex("^(Да|Нет)$"), tof_check_answer)],
-            5: [MessageHandler(Filters.text & ~Filters.command, true_or_false)]
+            4: [MessageHandler(Filters.regex("^(Да|Нет)$"), tof_check_answer, pass_user_data=True)],
+            5: [MessageHandler(Filters.text & ~Filters.command, true_or_false, pass_user_data=True)]
         },
         fallbacks=[CommandHandler('main_menu', help)],
     )
