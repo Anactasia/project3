@@ -375,7 +375,7 @@ def true_or_false(update, context):
             f"Вы прошли игру и набрали балл: {context.user_data['tof_bal']}!\n"
             "—ฅ/ᐠ. ̫ .ᐟ\ฅ — N"
         )
-        return ConversationHandler.END
+        return 12
 
 
 def market_buy(update, context):
@@ -399,7 +399,7 @@ def market_search(update, context):
         'Алиэкспресс: \n'
         f'https://aliexpress.ru/wholesale?catId=&SearchText={tovar}\n'
     )
-    return ConversationHandler.END
+    return 6
 
 
 def stop(update, context):
