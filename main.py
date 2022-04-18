@@ -90,7 +90,8 @@ def checking_messages_menu(update, context):
                                   "Я люблю котиков(просто без ума от них)\n")
     elif message == 'python':
         update.message.reply_text("Хе-хе-хе\n"
-                                  "Лови небольшой стикерпак от моих разработчиков.\n")
+                                  "Лови небольшой стикерпак от моих разработчиков.\n"
+                                  "https://t.me/addstickers/kitten_pass_the_time")
         context.bot.send_sticker(chat_id=update.effective_chat.id,
                                  sticker=r"CAACAgIAAxkBAAEEf8ViXG3M2EWheedw1HAPWlxzbAbF9gACHBsAAsq04EqC3yEVv_ngiSQE")
 
@@ -153,12 +154,13 @@ def get_game1(update, context):
     s = ReplyKeyboardMarkup(exit, one_time_keyboard=True)
     attempts = 0
     spell_word = []
-    answer = update.message.text.lower().split(' ')
+    answer = update.message.text.lower()
+    print(answer)
     if 'нет' in answer:
         return help(update, context)
     elif 'выход' in answer or '/main_menu' in answer:
         return help(update, context)
-    else:
+    elif 'да' in answer:
         db_session.global_init("db/игра.db")
         db_sess = db_session.create_session()
         a = [i for i in db_sess.query(Words).filter(Words.word.notin_(words_used))]
@@ -169,6 +171,7 @@ def get_game1(update, context):
                                       "/main_menu - главное меню",
                                       reply_markup=s
                                       )
+            return 1
         else:
             w = random.choice(a)
             wor = w.word
@@ -184,6 +187,21 @@ def get_game1(update, context):
                                       reply_markup=s
                                       )
             return 2
+    elif '/' in answer:
+        update.message.reply_text("Если вы пытаетесь вызвать команду\n"
+                                  "То нужно сначала выйти в главное меню\n"
+                                  "/main_menu или кнопка 'Выход'"
+
+                                  )
+        return 1
+    else:
+        update.message.reply_text("К сожелению, я вас не понимаю\n"
+                                  "Ответьте, хотите ли вы играть?\n"
+                                  "Да или Нет",
+
+                                  )
+
+        return 1
 
 
 def play_game1(update, context):
@@ -245,7 +263,12 @@ def play_game1(update, context):
                                           reply_markup=s
                                           )
                 return 1
+    elif '/' in letter:
+        update.message.reply_text("Если вы пытаетесь вызвать команду\n"
+                                  "То нужно сначала выйти в главное меню\n"
+                                  "/main_menu или кнопка 'Выход'"
 
+                                  )
     else:
         update.message.reply_text("Это точно не одна буква.\n"
                                   "Напоминаю, 1 ход = 1 буква."
@@ -290,6 +313,13 @@ def get_weather(update, context):
         update.message.reply_text(f"Город: {query.capitalize()}\n"
                                   f"Погодное условие: {conditions}\n"
                                   f"Температура: {temp} °C\n")
+    elif '/' in query:
+        update.message.reply_text("Если вы пытаетесь вызвать команду\n"
+                                  "То нужно сначала выйти в главное меню\n"
+                                  "/main_menu или кнопка 'Выход'"
+
+                                  )
+        return 1
     else:
         update.message.reply_text("Или вы допустили ошибку, или я не знаю такой город.\n"
                                   "Проверьте написание или укажите другой город")
@@ -297,24 +327,28 @@ def get_weather(update, context):
 
 
 def get_tof(update, context):
-    button = [["Да", "Нет"]]
+    button = [["Да", "Нет", "Выход"]]
     m = ReplyKeyboardMarkup(button, one_time_keyboard=True)
     # context.user_data['name_user'] = update.message.text
     update.message.reply_text(
         f"Рад приветствовать на игре 'Правда или Ложь', {context.user_data['name_user'].capitalize()}.\n"
         "Хочу вам рассказать правила игры: \n"
-        "Я рассказываю вам интересный факт, а вы угадываете: правда это или ложь."
-        " За каждый правильный ответ вам начисляется один балл. "
+        "Я рассказываю вам интересный факт, а вы угадываете: правда это или ложь.\n"
+        "\n"
+        "За каждый правильный ответ вам начисляется один балл. "
         "В конце я подведу итоги и выведу ваше количество правильных ответов. \n"
+        "\n"
         "Все довольно просто, начинаем?\n"
-        "Выберите, да или нет",
+        "Выберите, да или нет\n"
+        "\n"
+        "Если надоест, можешь в любой момент нажать на кнопку 'Выход'",
         reply_markup=m)
     return 4
 
 
 def tof_check_answer(update, context):
-    answer = update.message.text
-    if answer == "Да":
+    answer = update.message.text.lower()
+    if answer == "да":
         with open("data/tof.json", 'r', encoding='utf8') as f:
             context.user_data['tof_data'] = json.load(f)
         print(json.dumps(context.user_data['tof_data'], indent=2))
@@ -331,14 +365,26 @@ def tof_check_answer(update, context):
             reply_markup=m
         )
         return 5
+
+    elif '/' in answer:
+        update.message.reply_text("Если вы пытаетесь вызвать команду\n"
+                                  "То нужно сначала выйти в главное меню\n"
+                                  "/main_menu или кнопка 'Выход'"
+
+                                  )
+        return 4
+    elif 'выход' == answer or '/main_menu' in answer or 'нет' == answer:
+        return help(update, context)
+
     else:
-        update.message.reply_text("Ок, как хочешь")
-        return -1
+        update.message.reply_text("К сожелению, я вас не понимаю\n"
+                                  "Выберите, да или нет")
+        return 4
 
 
 def tof_is_right_answer(context, answer):
     a = False
-    if answer == 'Правда':
+    if answer == 'правда':
         a = True
     if a == context.user_data['tof_answer']:
         return True
@@ -347,9 +393,9 @@ def tof_is_right_answer(context, answer):
 
 
 def true_or_false(update, context):
-    buttons = [['Правда', 'Ложь']]
-    m = ReplyKeyboardMarkup(buttons, one_time_keyboard=True)
-    answer = update.message.text
+    answer = update.message.text.lower()
+    if 'выход' == answer or '/main_menu' in answer:
+        return help(update, context)
     if tof_is_right_answer(context, answer):
         update.message.reply_text(f"Верно, поздравляю, вам +1 балл! \n")
         context.user_data['tof_bal'] += 1
@@ -361,6 +407,8 @@ def true_or_false(update, context):
         context.user_data['tof_is_first_answer'] = False
 
     if len(context.user_data['tof_data']['data']) > 0:
+        buttons = [['Правда'], ['Ложь'], ['Выход']]
+        r = ReplyKeyboardMarkup(buttons, one_time_keyboard=True)
         q = context.user_data['tof_data']['data'].pop()
         context.user_data['tof_quest'] = q['quest']
         context.user_data['tof_answer'] = q['answer']
@@ -368,37 +416,47 @@ def true_or_false(update, context):
         update.message.reply_text(
             f"Итак, факт!\n"
             f"{q['quest']}\n",
-            reply_markup=m
+            reply_markup=r
         )
     else:
         update.message.reply_text(
             f"Вы прошли игру и набрали балл: {context.user_data['tof_bal']}!\n"
+            "/main_menu - главное меню\n"
             "—ฅ/ᐠ. ̫ .ᐟ\ฅ — N"
         )
-        return 12
+        return 5
 
 
 def market_buy(update, context):
+    exit = [['Выход']]
+    s = ReplyKeyboardMarkup(exit, one_time_keyboard=True)
     update.message.reply_text("Введи название товара, который хочешь найти\n"
-                              "—ฅ/ᐠ. ̫ .ᐟ\ฅ — O"
+                              "Если надоест, можешь в любой момент нажать на кнопку 'Выход'\n"
+                              "—ฅ/ᐠ. ̫ .ᐟ\ฅ — O",
+                              reply_markup=s
                               )
     return 6
 
 
 def market_search(update, context):
+    we = update.message.text
     tovar = urllib.parse.quote(update.message.text)
-    update.message.reply_text(
-        'Вот ссылки на различные интернет-магазины! \n'
-        '\n'
-        'Яндекс-маркет: \n'
-        f'https://market.yandex.ru/search?text={tovar}\n'
-        '\n'
-        'Озон: \n'
-        f'https://www.ozon.ru/search?text={tovar}\n'
-        '\n'
-        'Алиэкспресс: \n'
-        f'https://aliexpress.ru/wholesale?catId=&SearchText={tovar}\n'
-    )
+    print(tovar)
+    if we.lower() == 'выход' or we.lower() == '/main_menu':
+        return help(update, context)
+    else:
+        update.message.reply_text(
+            'Вот ссылки на различные интернет-магазины! \n'
+            '\n'
+            'Яндекс-маркет: \n'
+            f'https://market.yandex.ru/search?text={tovar}\n'
+            '\n'
+            'Озон: \n'
+            f'https://www.ozon.ru/search?text={tovar}\n'
+            '\n'
+            'Алиэкспресс: \n'
+            f'https://aliexpress.ru/wholesale?catId=&SearchText={tovar}\n'
+        )
     return 6
 
 
@@ -426,8 +484,8 @@ def main():
                 2: [MessageHandler(Filters.text, play_game1)],
 
                 102: [MessageHandler(Filters.text & ~Filters.command, get_tof, pass_user_data=True)],
-                4: [MessageHandler(Filters.regex("^(Да|Нет)$"), tof_check_answer, pass_user_data=True)],
-                5: [MessageHandler(Filters.text & ~Filters.command, true_or_false, pass_user_data=True)],
+                4: [MessageHandler(Filters.text, tof_check_answer, pass_user_data=True)],
+                5: [MessageHandler(Filters.text, true_or_false, pass_user_data=True)],
 
                 103: [MessageHandler(Filters.text & ~Filters.command, market_buy, pass_user_data=True)],
                 6: [MessageHandler(Filters.text & ~Filters.command, market_search)]
