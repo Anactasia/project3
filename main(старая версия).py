@@ -4,6 +4,7 @@ import logging
 from telegram.ext import Updater, MessageHandler, Filters
 from telegram import ReplyKeyboardMarkup
 from telegram.ext import ConversationHandler
+from telegram import ReplyKeyboardRemove
 from telegram.ext import CommandHandler
 import requests
 from data import db_session
@@ -24,6 +25,9 @@ logger = logging.getLogger(__name__)
 
 TOKEN = '5180202177:AAEFDmmGqMctktb_bOhrWNWjqj3ZbvWhnwg'  # Токен чат-бота
 # TOKEN = '5216550043:AAFqTgbQys_J2zQliL24uqpIqMDN86i8OWY'
+
+# reply_keyboard = [['/weather', '/true_or_false']]
+# markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
 
 attempts = 0
 words_used = []
@@ -56,8 +60,8 @@ def first_response(update, context):
         "\n"
         "Это пока всё, но я стараюсь развиваться(\n"
         "\n"
-        "Точно, чуть не забыл, у меня есть подарок для тебя,\n"
-        "Чтоб его получить отправь кодовое слово из 6 букв.\n"
+        "Точно, чуть не забыл, у меня есть подарок для тебя\n"
+        "Чтоб его получить отправь кодовое слово из 6 букв\n"
         "Буквы этого слова можно найти во всех моих функциях\n"
         "—ฅ/ᐠ. ̫ .ᐟ\ฅ — P"
     )
@@ -90,12 +94,12 @@ def checking_messages_menu(update, context):
                                   "Я люблю котиков(просто без ума от них)\n")
     elif message == 'python':
         update.message.reply_text("Хе-хе-хе\n"
-                                  "Лови небольшой стикерпак от моих разработчиков.\n")
+                                  "Лови небольшой стикерпак от моих разработчиков\n")
         context.bot.send_sticker(chat_id=update.effective_chat.id,
                                  sticker=r"CAACAgIAAxkBAAEEf8ViXG3M2EWheedw1HAPWlxzbAbF9gACHBsAAsq04EqC3yEVv_ngiSQE")
 
     elif message[0] != '/':
-        update.message.reply_text("Или я это ещё не умею,\n"
+        update.message.reply_text("Или я это ещё не умею\n"
                                   "Или я вас не понимаю(извините)\n"
                                   "/ᐠᵕ̩̩̥ ‸ᵕ̩̩̥ ᐟ\ﾉ")
 
@@ -107,7 +111,7 @@ def checking_messages_menu(update, context):
         elif '/gallows' == message:
             return gallows(update, context)
         elif '/true_or_false' == message:
-            return get_tof(update, context)
+            return true_or_false(update, context)
         elif '/market_buy' == message:
             return market_buy(update, context)
         elif '/main_menu' == message:
@@ -141,7 +145,7 @@ def gallows(update, context):
                               "Я загадываю слово, а ты угадываешь.\n"
                               "1 ход = 1 буква. 8 прав на ошибку\n"
                               "Are you ready ? Напиши Да или Нет\n"
-                              "Если надоест, можешь в любой момент нажать на кнопку 'Выход'",
+                              "Если надоест, можешь в любой момент написать или нажать на кнопку 'Выход'",
                               reply_markup=s
                               )
     return 1
@@ -156,7 +160,7 @@ def get_game1(update, context):
     answer = update.message.text.lower().split(' ')
     if 'нет' in answer:
         return help(update, context)
-    elif 'выход' in answer or '/main_menu' in answer:
+    elif 'выход' in answer:
         return help(update, context)
     else:
         db_session.global_init("db/игра.db")
@@ -191,7 +195,7 @@ def play_game1(update, context):
     exit = [['Выход']]
     s = ReplyKeyboardMarkup(exit, one_time_keyboard=True)
     letter = update.message.text.lower()
-    if 'выход' in letter or '/main_menu' in letter:
+    if 'выход' in letter:
         return help(update, context)
     letter = update.message.text.lower()
     if letter.isalpha() and len(letter) == 1:
@@ -271,7 +275,7 @@ def get_weather(update, context):
     exit = [['Выход']]
     s = ReplyKeyboardMarkup(exit, one_time_keyboard=True)
     query = update.message.text.lower()
-    if 'выход' == query or '/main_menu' in query:
+    if 'выход' == query:
         return help(update, context)
     if not query:
         query = 'fetch:ip'
@@ -411,19 +415,60 @@ def main():
     updater = Updater(TOKEN)
 
     dp = updater.dispatcher
+    # conv_handler = ConversationHandler(
+    #     entry_points=[CommandHandler('start', start)],
+    #     states={
+    #         0: [MessageHandler(Filters.text & ~Filters.command, first_response, pass_user_data=True)],
+    #         11: [MessageHandler(Filters.text & ~Filters.command, checking_messages_menu, pass_user_data=True)]},
+    #     fallbacks=[CommandHandler('bye', bye)]
+    # )
+    # weather_handler = ConversationHandler(
+    #     entry_points=[CommandHandler('weather', weather)],
+    #     states={
+    #         3: [MessageHandler(Filters.text & ~Filters.command, get_weather)],
+    #         11: [MessageHandler(Filters.text & ~Filters.command, checking_messages_menu, pass_user_data=True)]},
+    #     fallbacks=[CommandHandler('main_menu', help)]
+    # )
+    # gallows_handler = ConversationHandler(
+    #     entry_points=[CommandHandler('gallows', gallows)],
+    #     states={
+    #         1: [MessageHandler(Filters.text & ~Filters.command, get_game1)],
+    #         2: [MessageHandler(Filters.text & ~Filters.command, play_game1)],
+    #         11: [MessageHandler(Filters.text & ~Filters.command, checking_messages_menu, pass_user_data=True)]
+    #     },
+    #     fallbacks=[CommandHandler('main_menu', help)]
+    # )
+    #
+    # tof_handler = ConversationHandler(
+    #     entry_points=[CommandHandler('true_or_false', get_tof)],
+    #     states={
+    #         4: [MessageHandler(Filters.regex("^(Да|Нет)$"), tof_check_answer, pass_user_data=True)],
+    #         5: [MessageHandler(Filters.text & ~Filters.command, true_or_false, pass_user_data=True)],
+    #         11: [MessageHandler(Filters.text & ~Filters.command, checking_messages_menu, pass_user_data=True)]
+    #     },
+    #     fallbacks=[CommandHandler('main_menu', help)],
+    # )
+    #
+    # market_handler = ConversationHandler(
+    #     entry_points=[CommandHandler('market_buy', market_buy)],
+    #     states={
+    #         6: [MessageHandler(Filters.text & ~Filters.command, market_search)],
+    #         11: [MessageHandler(Filters.text & ~Filters.command, checking_messages_menu, pass_user_data=True)]
+    #     },
+    #     fallbacks=[CommandHandler('main_menu', help)],
+    # )
 
     start_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={0: [MessageHandler(Filters.text & ~Filters.command, first_response, pass_user_data=True)],
-                11: [MessageHandler(Filters.text, checking_messages_menu, pass_user_data=True)],
-                12: [MessageHandler(Filters.text, help, pass_user_data=True)],
+                11: [MessageHandler(Filters.text | Filters.photo, checking_messages_menu, pass_user_data=True)],
 
                 100: [MessageHandler(Filters.text & ~Filters.command, weather, pass_user_data=True)],
-                3: [MessageHandler(Filters.text, get_weather)],
+                3: [MessageHandler(Filters.text & ~Filters.command, get_weather)],
 
                 101: [MessageHandler(Filters.text & ~Filters.command, gallows, pass_user_data=True)],
-                1: [MessageHandler(Filters.text, get_game1)],
-                2: [MessageHandler(Filters.text, play_game1)],
+                1: [MessageHandler(Filters.text & ~Filters.command, get_game1)],
+                2: [MessageHandler(Filters.text & ~Filters.command, play_game1)],
 
                 102: [MessageHandler(Filters.text & ~Filters.command, get_tof, pass_user_data=True)],
                 4: [MessageHandler(Filters.regex("^(Да|Нет)$"), tof_check_answer, pass_user_data=True)],
@@ -435,6 +480,12 @@ def main():
                 },
         fallbacks=[CommandHandler('stop', stop)]
     )
+
+    # dp.add_handler(conv_handler)
+    # dp.add_handler(gallows_handler)
+    # dp.add_handler(weather_handler)
+    # dp.add_handler(tof_handler)
+    # dp.add_handler(market_handler)
 
     dp.add_handler(start_handler)
 
