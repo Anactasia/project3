@@ -332,11 +332,10 @@ def get_tof(update, context):
     # context.user_data['name_user'] = update.message.text
     update.message.reply_text(
         f"Рад приветствовать на игре 'Правда или Ложь', {context.user_data['name_user'].capitalize()}.\n"
-        "Хочу вам рассказать правила игры: \n"
-        "Я рассказываю вам интересный факт, а вы угадываете: правда это или ложь.\n"
-        "\n"
-        "За каждый правильный ответ вам начисляется один балл. "
-        "В конце я подведу итоги и выведу ваше количество правильных ответов. \n"
+        "Правила игры: \n"
+        "Я рассказываю интересный факт, а ты угадываешь: правда это или ложь.\n"
+        "За каждый правильный ответ начисляется один балл. "
+        "В конце я подведу итоги и выведу количество правильных ответов. \n"
         "\n"
         "Все довольно просто, начинаем?\n"
         "Выберите, да или нет\n"
@@ -356,28 +355,29 @@ def tof_check_answer(update, context):
         context.user_data['tof_is_first_answer'] = True
         context.user_data['tof_quest'] = q['quest']
         context.user_data['tof_answer'] = q['answer']
+        context.user_data['tof_dop'] = q['dop']
+        context.user_data['tof_file'] = q['file']
         context.user_data['tof_bal'] = 0
-        buttons = [['Правда', 'Ложь']]
+        buttons = [['Правда', 'Ложь', 'Выход']]
         m = ReplyKeyboardMarkup(buttons, one_time_keyboard=True)
-        update.message.reply_text(
-            f"Итак, факт!\n"
-            f"{q['quest']}\n",
-            reply_markup=m
-        )
+        context.bot.send_photo(chat_id=update.effective_chat.id,
+                               photo=open(context.user_data['tof_file'], 'rb'),
+                               caption=f"Итак, факт!\n\n{q['quest']}\n",
+                               reply_markup=m)
+
         return 5
 
     elif '/' in answer:
         update.message.reply_text("Если вы пытаетесь вызвать команду\n"
                                   "То нужно сначала выйти в главное меню\n"
                                   "/main_menu или кнопка 'Выход'"
-
                                   )
         return 4
     elif 'выход' == answer or '/main_menu' in answer or 'нет' == answer:
         return help(update, context)
 
     else:
-        update.message.reply_text("К сожелению, я вас не понимаю\n"
+        update.message.reply_text("К сожалению, я вас не понимаю\n"
                                   "Выберите, да или нет")
         return 4
 
@@ -400,7 +400,9 @@ def true_or_false(update, context):
         update.message.reply_text(f"Верно, поздравляю, вам +1 балл! \n")
         context.user_data['tof_bal'] += 1
     else:
-        update.message.reply_text(f"К сожалению, вы ошиблись.\n")
+        update.message.reply_text(f"К сожалению, вы ошиблись.\n"
+                                  "\n"
+                                  f"{context.user_data['tof_dop']}")
 
     if context.user_data['tof_is_first_answer']:
         del context.user_data['tof_data']['data'][0]
@@ -412,12 +414,13 @@ def true_or_false(update, context):
         q = context.user_data['tof_data']['data'].pop()
         context.user_data['tof_quest'] = q['quest']
         context.user_data['tof_answer'] = q['answer']
+        context.user_data['tof_dop'] = q['dop']
+        context.user_data['tof_file'] = q['file']
         print(q)
-        update.message.reply_text(
-            f"Итак, факт!\n"
-            f"{q['quest']}\n",
-            reply_markup=r
-        )
+        context.bot.send_photo(chat_id=update.effective_chat.id,
+                               photo=open(context.user_data['tof_file'], 'rb'),
+                               caption=f"Итак, факт!\n\n{q['quest']}\n",
+                               reply_markup=r)
     else:
         update.message.reply_text(
             f"Вы прошли игру и набрали балл: {context.user_data['tof_bal']}!\n"
