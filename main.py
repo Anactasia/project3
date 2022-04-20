@@ -224,13 +224,15 @@ def play_game1(update, context):
             if word.count('_') == len(word):
                 exit = [['Выход'], ['Да'], ['Нет']]
                 s = ReplyKeyboardMarkup(exit, one_time_keyboard=True)
-                context.bot.send_photo(chat_id=update.effective_chat.id, photo=open('img/кот_с_пальцем.jpg', 'rb'))
-                update.message.reply_text("Поздравляю, слово разгадано\n"
-                                          f"Слово: {' '.join(spell_word)}\n"
-                                          "Хотите еще раз сыграть?\n"
-                                          "Напишите Да или Нет.\n"
-                                          "—ฅ/ᐠ. ̫ .ᐟ\ฅ — H",
-                                          reply_markup=s)
+
+                context.bot.send_photo(chat_id=update.effective_chat.id,
+                                       photo=open('img/кот_с_пальцем.jpg', 'rb'),
+                                       caption="Поздравляю, слово разгадано\n"
+                                               f"Слово: {' '.join(spell_word)}\n"
+                                               "Хотите еще раз сыграть?\n"
+                                               "Напишите Да или Нет.\n"
+                                               "—ฅ/ᐠ. ̫ .ᐟ\ฅ — H",
+                                       reply_markup=s)
                 return 1
 
             update.message.reply_text("Молодец, угадал!\n"
@@ -255,13 +257,14 @@ def play_game1(update, context):
             else:
                 exit = [['Выход'], ['Да'], ['Нет']]
                 s = ReplyKeyboardMarkup(exit, one_time_keyboard=True)
-                context.bot.send_photo(chat_id=update.effective_chat.id, photo=open('img/кот_немного_плачет.jpg', 'rb'))
-                update.message.reply_text("Попытки кончились.\n"
-                                          f"Это было слово: {words_used[-1].upper()}\n"
-                                          "Хочешь ещё раз попробывать? Напиши Да или Нет.\n"
-                                          "—ฅ/ᐠ. ̫ .ᐟ\ฅ — H",
-                                          reply_markup=s
-                                          )
+                context.bot.send_photo(chat_id=update.effective_chat.id,
+                                       photo=open('img/кот_немного_плачет.jpg', 'rb'),
+                                       caption="Попытки кончились.\n"
+                                               f"Это было слово: {words_used[-1].upper()}\n"
+                                               "Хочешь ещё раз попробывать?\n"
+                                               "Напиши Да или Нет.\n"
+                                               "—ฅ/ᐠ. ̫ .ᐟ\ฅ — H",
+                                       reply_markup=s)
                 return 1
     elif '/' in letter:
         update.message.reply_text("Если вы пытаетесь вызвать команду\n"
@@ -309,10 +312,12 @@ def get_weather(update, context):
         temp = round(int(data['list'][0]['main']['temp']))
         icon = data['list'][0]['weather'][0]['icon']
         url_photo = f"http://openweathermap.org/img/wn/{icon}@2x.png"
-        context.bot.send_photo(chat_id=update.effective_chat.id, photo=url_photo, )
-        update.message.reply_text(f"Город: {query.capitalize()}\n"
-                                  f"Погодное условие: {conditions}\n"
-                                  f"Температура: {temp} °C\n")
+
+        context.bot.send_photo(chat_id=update.effective_chat.id,
+                               photo=url_photo,
+                               caption=f"Город: {query.capitalize()}\n"
+                                       f"Погодное условие: {conditions}\n"
+                                       f"Температура: {temp} °C\n")
     elif '/' in query:
         update.message.reply_text("Если вы пытаетесь вызвать команду\n"
                                   "То нужно сначала выйти в главное меню\n"
